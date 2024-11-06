@@ -22,16 +22,46 @@ model User {
   referralCode String?   @unique
   points       Int?      @default(0)
   createdAt    DateTime? @default(now())
+  events       Event[]
+  tickets      Ticket[]
 }
 
 model Event {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String
-  location    String
-  price       Int
-  startDate   DateTime
-  organizerId Int
+  id             Int      @id @default(autoincrement())
+  name           String
+  description    String
+  price          Int
+  startDate      DateTime
+  available_seat Int      @default(0)
+  organizer      User     @relation(fields: [organizerId], references: [id])
+  organizerId    Int
+  location       Location @relation(fields: [locationId], references: [id])
+  locationId     Int
+  category       Category @relation(fields: [categoryId], references: [id])
+  categoryId     Int
+  ticket         Ticket   @relation(fields: [ticketId], references: [id])
+  ticketId       Int
+}
+
+model Location {
+  id      Int     @id @default(autoincrement())
+  name    String  @unique
+  address String
+  events  Event[]
+}
+
+model Category {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  events Event[]
+}
+
+model Ticket {
+  id     Int     @id @default(autoincrement())
+  price  Int
+  Events Event[]
+  User   User?   @relation(fields: [userId], references: [id])
+  userId Int?
 }
 
 enum Role {

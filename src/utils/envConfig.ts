@@ -4,4 +4,4 @@ config({
   path: ".env",
 });
 
-export const { PORT, SECRET_KEY } = process.env;
+export const { PORT, JWT_SECRET } = process.env;
