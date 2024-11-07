@@ -59,35 +59,35 @@ async function Register(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-async function Login(req: Request,  res: Response, next: NextFunction) {
+async function Login(req: Request, res: Response, next: NextFunction) {
   try {
-    const {email, password} = req.body;
+    const { email, password } = req.body;
 
     const findUser = await prisma.user.findUnique({
       where: { email },
     });
 
     if (!findUser) throw new Error("Invalid Email");
-    const isValid  = await compare(password, findUser.password);
+    const isValid = await compare(password, findUser.password);
 
     if (!isValid) throw new Error("Invalid Password");
-    
+
 
     const payload = {
       email,
       role: findUser.role
     }
 
-    const token = sign(payload, JWT_SECRET as string, {expiresIn: "1d"})
+    const token = sign(payload, JWT_SECRET as string, { expiresIn: "1d" })
 
-    res.status(200).send({
-      message : "success",
+    res.status(200).cookie("access_token", token).send({
+      message: "success",
       access_token: token,
     });
   } catch (err) {
-     next(err);
+    next(err);
   }
 }
 
 
-export { Register,Login };
+export { Register, Login };

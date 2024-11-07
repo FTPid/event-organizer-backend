@@ -2,9 +2,11 @@ import express, { Application } from "express";
 import { PORT as port } from "./utils/envConfig";
 import cors from "cors";
 import authRouter from "./routes/authRoutes";
+import categoryRouter from "./routes/categoryRoutes"
 
 
 import ErrorMiddleware from "./middlewares/error.middleware";
+import { VerifyToken } from "./middlewares/authMiddleware";
 
 const PORT = Number(port) || 8000;
 
@@ -15,6 +17,7 @@ app.use(express.json());
 
 
 app.use("/auth-management", authRouter);
+app.use("/categories", VerifyToken, categoryRouter);
 
 app.use(ErrorMiddleware);
 

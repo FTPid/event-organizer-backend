@@ -1,11 +1,12 @@
 import { NextFunction, Response, Request } from "express";
 import { verify } from "jsonwebtoken";
 import { JWT_SECRET } from "../utils/envConfig";
-import { User } from "@prisma/client";
+import { User } from "../custom";
+
 
 async function VerifyToken(req: Request, res:Response , next: NextFunction) {
     try {
-        const token = req.header("Authorization")?.replace("Bearer", "");
+        const token = req.header("Authorization")?.replace("Bearer ", "");
         if(!token) throw new Error("Unauthorized");
 
         const user = verify(token,JWT_SECRET as string);
