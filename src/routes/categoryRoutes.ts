@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { CreateCategory, DeleteCategory, GetCategories, GetCategory, UpdateCategory } from '../controllers/categoryController';
-import { VerifyToken } from '../middlewares/authMiddleware';
+
 
 const router = Router();
 // create category event
