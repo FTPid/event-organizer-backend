@@ -27,20 +27,20 @@ model User {
 }
 
 model Event {
-  id             Int      @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String
   description    String
-  price          Int
+  type           EventType
+  price          Int?
   startDate      DateTime
-  available_seat Int      @default(0)
-  organizer      User     @relation(fields: [organizerId], references: [id])
+  available_seat Int       @default(0)
+  organizer      User      @relation(fields: [organizerId], references: [id])
   organizerId    Int
-  location       Location @relation(fields: [locationId], references: [id])
+  location       Location  @relation(fields: [locationId], references: [id])
   locationId     Int
-  category       Category @relation(fields: [categoryId], references: [id])
+  category       Category  @relation(fields: [categoryId], references: [id])
   categoryId     Int
-  ticket         Ticket   @relation(fields: [ticketId], references: [id])
-  ticketId       Int
+  tickets        Ticket[]
 }
 
 model Location {
@@ -68,4 +68,9 @@ enum Role {
   ADMIN
   CUSTOMER
   ORGANIZER
+}
+
+enum EventType {
+  FREE
+  PAID
 }

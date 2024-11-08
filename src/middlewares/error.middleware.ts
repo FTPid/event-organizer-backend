@@ -7,6 +7,7 @@ export default function ErrorMiddleware(
   next: NextFunction
 ) {
   res.status(500).send({
-    message: err.message,
+    message: "Internal Server Error",
+    error: err.message
   });
 }

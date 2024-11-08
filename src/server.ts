@@ -4,6 +4,7 @@ import cors from "cors";
 import authRouter from "./routes/authRoutes";
 import categoryRouter from "./routes/categoryRoutes"
 import locationRouter from "./routes/locationRoutes"
+import eventRouter from "./routes/eventRoutes"
 
 
 import ErrorMiddleware from "./middlewares/error.middleware";
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use("/auth-management", authRouter);
 app.use("/categories", VerifyToken, categoryRouter);
 app.use("/locations", VerifyToken, locationRouter);
+app.use("/events", VerifyToken, eventRouter);
 
 app.use(ErrorMiddleware);
 

@@ -74,6 +74,7 @@ async function Login(req: Request, res: Response, next: NextFunction) {
 
 
     const payload = {
+      id: findUser.id,
       email,
       role: findUser.role
     }

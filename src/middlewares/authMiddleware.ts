@@ -4,21 +4,21 @@ import { JWT_SECRET } from "../utils/envConfig";
 import { User } from "../custom";
 
 
-async function VerifyToken(req: Request, res:Response , next: NextFunction) {
-    try {
-        const token = req.header("Authorization")?.replace("Bearer ", "");
-        if(!token) throw new Error("Unauthorized");
+async function VerifyToken(req: Request, res: Response, next: NextFunction) {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) throw new Error("Unauthorized");
 
-        const user = verify(token,JWT_SECRET as string);
+    const user = verify(token, JWT_SECRET as string);
 
-        if(!user) throw new Error("Unauthorized");
-        
-        req.user = user as User;
-        console.log(user);
-        next()
-    } catch (err) {
-        next(err);
-    }
+    if (!user) throw new Error("Unauthorized");
+
+    req.user = user as User;
+    console.log(user);
+    next()
+  } catch (err) {
+    res.status(401).send({ message: "Unauthorized" });
+  }
 }
 
 async function AdminGuard(req: Request, res: Response, next: NextFunction) {
@@ -31,4 +31,4 @@ async function AdminGuard(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export {VerifyToken, AdminGuard}
+export { VerifyToken, AdminGuard }
