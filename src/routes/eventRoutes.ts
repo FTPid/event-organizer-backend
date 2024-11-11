@@ -1,11 +1,10 @@
 import { Router } from "express";
-import { CreateEvent, DeleteEvent, GetEvent, GetEventLists, UpdateEvent } from "../controllers/eventController";
+import { CreateEvent, DeleteEvent, GetEvent, GetEventLists, UpdateEvent, upload } from "../controllers/eventController";
 
 
 const router = Router();
 
-
-router.post("/create", CreateEvent);
+router.post('/create', upload.single('image'), CreateEvent);
 router.get("/list", GetEventLists);
 router.get("/:id", GetEvent);
 router.patch("/:id", UpdateEvent);

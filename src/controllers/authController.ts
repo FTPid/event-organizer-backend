@@ -28,12 +28,12 @@ async function Register(req: Request, res: Response, next: NextFunction) {
     const salt = await genSalt(10);
     const hashPassword = await hash(password, salt);
 
-    // Generate a unique referral code
-    let referralCode = ""; // Initialize with an empty string
+
+    let referralCode = "";
     let isUnique = false;
 
     while (!isUnique) {
-      referralCode = generateReferralCode(); // Generate random code
+      referralCode = generateReferralCode();
       const existingCode = await prisma.user.findFirst({
         where: { referralCode },
       });
