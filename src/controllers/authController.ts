@@ -17,7 +17,8 @@ function generateReferralCode(length: number = 6): string {
 
 async function Register(req: Request, res: Response, next: NextFunction) {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, name, role, referralCode: inputReferralCode } = req.body;
+
 
     const findUser = await prisma.user.findUnique({
       where: { email },
@@ -25,12 +26,13 @@ async function Register(req: Request, res: Response, next: NextFunction) {
 
     if (findUser) throw new Error("Email already exists");
 
+
     const salt = await genSalt(10);
     const hashPassword = await hash(password, salt);
 
-
     let referralCode = "";
     let isUnique = false;
+
 
     while (!isUnique) {
       referralCode = generateReferralCode();
@@ -39,6 +41,28 @@ async function Register(req: Request, res: Response, next: NextFunction) {
       });
       if (!existingCode) isUnique = true;
     }
+
+
+    if (inputReferralCode) {
+      const referredUser = await prisma.user.findUnique({
+        where: { referralCode: inputReferralCode },
+      });
+
+      if (referredUser) {
+        await prisma.user.update({
+          where: { id: referredUser.id },
+          data: {
+            points: {
+              increment: 100,
+            },
+          },
+        });
+      } else {
+
+        throw new Error("Invalid referral code");
+      }
+    }
+
 
     const newUser = await prisma.user.create({
       data: {
@@ -58,6 +82,7 @@ async function Register(req: Request, res: Response, next: NextFunction) {
     next(err);
   }
 }
+
 
 async function Login(req: Request, res: Response, next: NextFunction) {
   try {
