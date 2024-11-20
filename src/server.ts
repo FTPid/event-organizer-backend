@@ -30,7 +30,7 @@ app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.use("/auth-management", authRouter);
 app.use("/categories", VerifyToken, categoryRouter);
 app.use("/locations", VerifyToken, locationRouter);
-app.use("/events", VerifyToken, eventRouter);
+app.use("/events", eventRouter);
 app.use('/promotions', VerifyToken, promotionRouter);
 app.use('/tickets', VerifyToken, ticketRouter);
 

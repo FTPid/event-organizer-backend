@@ -37,19 +37,27 @@ async function CreateEvent(req: Request, res: Response, next: NextFunction): Pro
 
         if (!organizerId) {
             res.status(403).send({ message: 'User must be authenticated to create an event.' });
+            return;
         }
 
-        if (type === 'FREE' && price !== 0) {
+        const parsedPrice = Number(price);
+
+
+        if (type === 'FREE' && parsedPrice !== 0) {
             res.status(400).send({ message: 'For FREE events, the price must be 0.' });
+            return;
         }
 
-        if (type === 'PAID' && (!price || Number(price) <= 0)) {
+
+        if (type === 'PAID' && (!parsedPrice || parsedPrice <= 0)) {
             res.status(400).send({ message: 'For PAID events, the price must be greater than 0.' });
+            return;
         }
 
         const parsedStartDate = new Date(startDate);
         if (isNaN(parsedStartDate.getTime())) {
             res.status(400).send({ message: "Invalid startDate format. Please use a valid ISO 8601 string." });
+            return;
         }
 
         const imagePath = req.file ? `images/${req.file.filename}` : null;
@@ -59,7 +67,7 @@ async function CreateEvent(req: Request, res: Response, next: NextFunction): Pro
                 name,
                 description,
                 type,
-                price: type === 'FREE' ? 0 : Number(price),
+                price: type === 'FREE' ? 0 : parsedPrice,
                 startDate: parsedStartDate,
                 available_seat: Number(available_seat),
                 organizerId,
@@ -82,22 +90,41 @@ async function CreateEvent(req: Request, res: Response, next: NextFunction): Pro
 
 
 
+
 async function GetEventLists(req: Request, res: Response, next: NextFunction) {
     const page = parseInt(req.query.page as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 10;
+    const search = req.query.search as string | undefined;
+    const category = req.query.category as string | undefined;
 
     try {
-        const totalEvents = await prisma.event.count();
+        const whereConditions: any = {};
 
+        // Add search condition only if search parameter is provided
+        if (search && search.trim()) {
+            whereConditions.name = { contains: search }; // Removed `mode: 'insensitive'`
+        }
 
+        // Add category filter condition only if category is provided
+        if (category && category.trim()) {
+            whereConditions.category = { name: { contains: category } }; // Removed `mode: 'insensitive'` here
+        }
+
+        // Count total events WITHOUT using 'mode' (as 'mode' is not allowed in count)
+        const totalEvents = await prisma.event.count({
+            where: whereConditions, // Only apply the filtering without `mode`
+        });
+
+        // Fetch events with the same whereConditions (findMany allows 'mode')
         const events = await prisma.event.findMany({
+            where: whereConditions,
             skip: (page - 1) * pageSize,
             take: pageSize,
             include: {
                 category: { select: { name: true } },
                 organizer: { select: { name: true } },
-                location: { select: { name: true } }
-            }
+                location: { select: { name: true } },
+            },
         });
 
         const eventData = events.map(event => ({
@@ -111,19 +138,21 @@ async function GetEventLists(req: Request, res: Response, next: NextFunction) {
             available_seat: event.available_seat,
             organizer: event.organizer?.name || null,
             location: event.location?.name || null,
-            category: event.category?.name || null
+            category: event.category?.name || null,
         }));
+
         res.status(200).send({
-            message: "success",
+            message: 'success',
             data: eventData,
             pagination: {
                 currentPage: page,
-                pageSize: pageSize,
+                pageSize,
                 totalPages: Math.ceil(totalEvents / pageSize),
-                totalEvents: totalEvents
-            }
+                totalEvents,
+            },
         });
     } catch (err) {
+        console.error('Error in GetEventLists:', err);
         next(err);
     }
 }
@@ -173,8 +202,7 @@ async function ShowEvent(req: Request, res: Response, next: NextFunction) {
 }
 
 
-async function GetEvent(req: Request, res: Response, next: NextFunction) {
-
+async function GetEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
     const eventId = parseInt(req.params.id);
 
     try {
@@ -182,6 +210,11 @@ async function GetEvent(req: Request, res: Response, next: NextFunction) {
             where: {
                 id: eventId
             },
+            include: {
+                category: { select: { name: true } },
+                organizer: { select: { name: true } },
+                location: { select: { name: true } }
+            }
         });
 
         if (!event) {
@@ -193,12 +226,23 @@ async function GetEvent(req: Request, res: Response, next: NextFunction) {
 
         res.status(200).send({
             message: 'Event retrieved successfully',
-            event,
+            event: {
+                id: event.id,
+                name: event.name,
+                description: event.description,
+                image: event.image,
+                type: event.type,
+                price: event.price,
+                startDate: event.startDate,
+                available_seat: event.available_seat,
+                organizer: event.organizer.name,
+                location: event.location.name,
+                category: event.category.name
+            }
         });
     } catch (err) {
         next(err);
     }
-
 }
 
 async function UpdateEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
