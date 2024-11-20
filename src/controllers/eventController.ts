@@ -17,6 +17,9 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+
+
 async function CreateEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
     const {
         name,
@@ -33,35 +36,35 @@ async function CreateEvent(req: Request, res: Response, next: NextFunction): Pro
         const organizerId = (req.user as User)?.id;
 
         if (!organizerId) {
-            res.status(403).send({
-                message: 'User must be authenticated to create an event.'
-            });
+            res.status(403).send({ message: 'User must be authenticated to create an event.' });
         }
-
 
         if (type === 'FREE' && price !== 0) {
-            res.status(400).send({
-                message: 'For FREE events, the price must be 0.'
-            });
+            res.status(400).send({ message: 'For FREE events, the price must be 0.' });
         }
 
-        if (type === 'PAID' && (price === undefined || price <= 0)) {
-            res.status(400).send({
-                message: 'For PAID events, the price must be greater than 0.'
-            });
+        if (type === 'PAID' && (!price || Number(price) <= 0)) {
+            res.status(400).send({ message: 'For PAID events, the price must be greater than 0.' });
         }
+
+        const parsedStartDate = new Date(startDate);
+        if (isNaN(parsedStartDate.getTime())) {
+            res.status(400).send({ message: "Invalid startDate format. Please use a valid ISO 8601 string." });
+        }
+
         const imagePath = req.file ? `images/${req.file.filename}` : null;
+
         const event = await prisma.event.create({
             data: {
                 name,
                 description,
                 type,
-                price: type === 'FREE' ? 0 : price,
-                startDate: new Date(startDate),
-                available_seat,
+                price: type === 'FREE' ? 0 : Number(price),
+                startDate: parsedStartDate,
+                available_seat: Number(available_seat),
                 organizerId,
-                locationId,
-                categoryId,
+                locationId: Number(locationId),
+                categoryId: Number(categoryId),
                 image: imagePath
             }
         });
@@ -74,6 +77,7 @@ async function CreateEvent(req: Request, res: Response, next: NextFunction): Pro
         next(err);
     }
 }
+
 
 
 
@@ -103,12 +107,12 @@ async function GetEventLists(req: Request, res: Response, next: NextFunction) {
             type: event.type,
             price: event.price,
             startDate: event.startDate,
+            image: event.image ? `http://127.0.0.1:8000/${event.image}` : null,
             available_seat: event.available_seat,
             organizer: event.organizer?.name || null,
             location: event.location?.name || null,
             category: event.category?.name || null
         }));
-
         res.status(200).send({
             message: "success",
             data: eventData,

@@ -56,6 +56,8 @@ model Promotion {
   event        Event         @relation(fields: [eventId], references: [id])
   eventId      Int
   isActive     Boolean       @default(true)
+  usageLimit   Int?
+  usedCount    Int
   Transaction  Transaction[]
 }
 

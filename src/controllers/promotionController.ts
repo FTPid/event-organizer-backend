@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 async function CreatePromotion(req: Request, res: Response, next: NextFunction) {
     try {
-        const { name, discount, eventId, isActive, type, referralCode } = req.body;
+        const { name, discount, eventId, isActive, type, referralCode, usageLimit, usedCount } = req.body;
 
         const event = await prisma.event.findUnique({
             where: { id: eventId },
@@ -37,6 +37,8 @@ async function CreatePromotion(req: Request, res: Response, next: NextFunction) 
                 type,
                 referralCode,
                 eventId,
+                usageLimit,
+                usedCount: 0,
                 isActive,
             },
         });
