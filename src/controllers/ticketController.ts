@@ -298,11 +298,11 @@ export const getTicketByTransaction = async (
             ticket: transaction.Ticket,
             event: {
                 id: transaction.event.id,
-                image: transaction.event.image,
+                image: transaction.event.image ? `http://127.0.0.1:8000/${transaction.event.image}` : null,
                 name: transaction.event.name,
                 description: transaction.event.description,
                 type: transaction.event.type,
-                price: transaction.event.price,
+                price: transaction.totalAmount,
                 startDate: transaction.event.startDate,
                 available_seat: transaction.event.available_seat,
                 organizer: transaction.event.organizer.name,
