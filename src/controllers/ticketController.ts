@@ -166,4 +166,157 @@ async function buyTicketWithPromotion(req: Request, res: Response, next: NextFun
 
 
 
-export { buyTicketWithPromotion };
+async function getTransaction(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const userId = req.user?.id;
+
+        if (!userId) {
+            res.status(400).send({ message: 'User is not authenticated' });
+            return;
+        }
+
+        const { page, pageSize } = req.query;
+
+        const currentPage = parseInt(page as string) || 1;
+        const size = parseInt(pageSize as string) || 10;
+
+        const skip = (currentPage - 1) * size;
+        const take = size;
+
+
+        const transactions = await prisma.transaction.findMany({
+            where: { userId: userId },
+            select: {
+                id: true,
+                totalAmount: true,
+                discount: true,
+                referralCode: true,
+                promotionId: true,
+                paymentStatus: true,
+                createdAt: true,
+                user: {
+                    select: {
+                        name: true,
+                    },
+                },
+                event: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
+            skip,
+            take,
+        });
+
+
+        const totalTransactions = await prisma.transaction.count({
+            where: { userId: userId },
+        });
+
+        const totalPages = Math.ceil(totalTransactions / size);
+
+
+        const transformedTransactions = transactions.map((transaction) => ({
+            id: transaction.id,
+            userName: transaction.user.name,
+            eventName: transaction.event.name,
+            totalAmount: transaction.totalAmount,
+            discount: transaction.discount,
+            referralCode: transaction.referralCode,
+            promotionId: transaction.promotionId,
+            paymentStatus: transaction.paymentStatus,
+            createdAt: transaction.createdAt,
+        }));
+
+        res.status(200).send({
+            message: 'Transactions retrieved successfully',
+            data: transformedTransactions,
+            pagination: {
+                currentPage,
+                pageSize: size,
+                totalPages,
+                totalTransactions,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+
+export const getTicketByTransaction = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+
+        const transactionId = parseInt(id);
+        if (isNaN(transactionId)) {
+            res.status(400).json({ message: "Invalid transaction ID" });
+            return;
+        }
+
+
+        const transaction = await prisma.transaction.findUnique({
+            where: { id: transactionId },
+            include: {
+                Ticket: true,
+                event: {
+                    include: {
+                        organizer: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                        location: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                        category: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+
+        if (!transaction) {
+            res.status(404).json({ message: "Transaction not found" });
+            return;
+        }
+
+
+        res.status(200).json({
+            ticket: transaction.Ticket,
+            event: {
+                id: transaction.event.id,
+                image: transaction.event.image,
+                name: transaction.event.name,
+                description: transaction.event.description,
+                type: transaction.event.type,
+                price: transaction.event.price,
+                startDate: transaction.event.startDate,
+                available_seat: transaction.event.available_seat,
+                organizer: transaction.event.organizer.name,
+                location: transaction.event.location.name,
+                category: transaction.event.category.name,
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
+
+
+export { buyTicketWithPromotion, getTransaction };
