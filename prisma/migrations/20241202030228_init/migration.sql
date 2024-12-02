@@ -1,31 +1,35 @@
-/*
-  Warnings:
+-- CreateTable
+CREATE TABLE `User` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `email` VARCHAR(191) NOT NULL,
+    `password` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `role` ENUM('ADMIN', 'CUSTOMER', 'ORGANIZER') NOT NULL,
+    `referralCode` VARCHAR(191) NULL,
+    `points` INTEGER NULL DEFAULT 0,
+    `createdAt` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-  - You are about to drop the column `price` on the `ticket` table. All the data in the column will be lost.
-  - You are about to drop the column `userId` on the `ticket` table. All the data in the column will be lost.
-  - You are about to drop the `_eventtoticket` table. If the table is not empty, all the data it contains will be lost.
-  - Added the required column `eventId` to the `Ticket` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `transactionId` to the `Ticket` table without a default value. This is not possible if the table is not empty.
+    UNIQUE INDEX `User_email_key`(`email`),
+    UNIQUE INDEX `User_referralCode_key`(`referralCode`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-*/
--- DropForeignKey
-ALTER TABLE `_eventtoticket` DROP FOREIGN KEY `_EventToTicket_A_fkey`;
+-- CreateTable
+CREATE TABLE `Event` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `image` VARCHAR(191) NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NOT NULL,
+    `type` ENUM('FREE', 'PAID') NOT NULL,
+    `price` INTEGER NULL,
+    `startDate` DATETIME(3) NOT NULL,
+    `available_seat` INTEGER NOT NULL DEFAULT 0,
+    `organizerId` INTEGER NOT NULL,
+    `locationId` INTEGER NOT NULL,
+    `categoryId` INTEGER NOT NULL,
 
--- DropForeignKey
-ALTER TABLE `_eventtoticket` DROP FOREIGN KEY `_EventToTicket_B_fkey`;
-
--- DropForeignKey
-ALTER TABLE `ticket` DROP FOREIGN KEY `Ticket_userId_fkey`;
-
--- AlterTable
-ALTER TABLE `ticket` DROP COLUMN `price`,
-    DROP COLUMN `userId`,
-    ADD COLUMN `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    ADD COLUMN `eventId` INTEGER NOT NULL,
-    ADD COLUMN `transactionId` INTEGER NOT NULL;
-
--- DropTable
-DROP TABLE `_eventtoticket`;
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `Promotion` (
@@ -36,6 +40,37 @@ CREATE TABLE `Promotion` (
     `referralCode` VARCHAR(191) NULL,
     `eventId` INTEGER NOT NULL,
     `isActive` BOOLEAN NOT NULL DEFAULT true,
+    `usageLimit` INTEGER NULL,
+    `usedCount` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Location` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `address` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `Location_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Category` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `Category_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Ticket` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `eventId` INTEGER NOT NULL,
+    `transactionId` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -63,6 +98,15 @@ CREATE TABLE `_TicketToUser` (
     UNIQUE INDEX `_TicketToUser_AB_unique`(`A`, `B`),
     INDEX `_TicketToUser_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `Event` ADD CONSTRAINT `Event_organizerId_fkey` FOREIGN KEY (`organizerId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Event` ADD CONSTRAINT `Event_locationId_fkey` FOREIGN KEY (`locationId`) REFERENCES `Location`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Event` ADD CONSTRAINT `Event_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `Category`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Promotion` ADD CONSTRAINT `Promotion_eventId_fkey` FOREIGN KEY (`eventId`) REFERENCES `Event`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, PaymentStatus } from '@prisma/client';
 import { User } from '../custom';
 import multer from 'multer';
 import path from 'path';
@@ -17,7 +17,50 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+async function uploadPaymentProof(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const { id } = req.params;
 
+    const image = req.file;
+    if (!image) {
+        res.status(400).send({
+            message: "No image file provided"
+        });
+        return;
+    }
+
+    try {
+        const imagePath = `images/${image.filename}`;
+
+
+        const transaction = await prisma.transaction.findUnique({
+            where: { id: parseInt(id) }
+        });
+
+        if (!transaction) {
+            res.status(404).send({
+                message: "Transaction not found"
+            });
+            return;
+        }
+
+
+        await prisma.transaction.update({
+            where: { id: parseInt(id) },
+            data: {
+                paymentProof: imagePath,
+                paymentStatus: PaymentStatus.VERIFICATION,
+            }
+        });
+
+        res.status(200).send({
+            message: "Payment proof uploaded successfully",
+            paymentProof: imagePath,
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
 
 
 async function CreateEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -93,29 +136,29 @@ async function CreateEvent(req: Request, res: Response, next: NextFunction): Pro
 
 async function GetEventLists(req: Request, res: Response, next: NextFunction) {
     const page = parseInt(req.query.page as string) || 1;
-    const pageSize = parseInt(req.query.pageSize as string) || 10;
+    const pageSize = parseInt(req.query.pageSize as string) || 8;
     const search = req.query.search as string | undefined;
     const category = req.query.category as string | undefined;
 
     try {
         const whereConditions: any = {};
 
-        // Add search condition only if search parameter is provided
+
         if (search && search.trim()) {
-            whereConditions.name = { contains: search }; // Removed `mode: 'insensitive'`
+            whereConditions.name = { contains: search };
         }
 
-        // Add category filter condition only if category is provided
+
         if (category && category.trim()) {
-            whereConditions.category = { name: { contains: category } }; // Removed `mode: 'insensitive'` here
+            whereConditions.category = { name: { contains: category } };
         }
 
-        // Count total events WITHOUT using 'mode' (as 'mode' is not allowed in count)
+
         const totalEvents = await prisma.event.count({
-            where: whereConditions, // Only apply the filtering without `mode`
+            where: whereConditions,
         });
 
-        // Fetch events with the same whereConditions (findMany allows 'mode')
+
         const events = await prisma.event.findMany({
             where: whereConditions,
             skip: (page - 1) * pageSize,
@@ -349,11 +392,41 @@ async function DeleteEvent(req: Request, res: Response, next: NextFunction) {
 
 }
 
+async function updatePaymentStatus(req: Request, res: Response, next: NextFunction) {
+    const { id } = req.params;
+    try {
+        const transaction = await prisma.transaction.findUnique({
+            where: { id: parseInt(id) }
+        });
+
+        if (!transaction) {
+            res.status(404).send({
+                message: "Transaction not found"
+            });
+        }
+
+        const updateTransaction = await prisma.transaction.update({
+            where: { id: parseInt(id) },
+            data: { paymentStatus: 'COMPLETED' },
+        })
+
+        res.status(200).send({
+            message: "Transaction updated successfully",
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+
+
 export {
     CreateEvent,
     GetEvent,
     ShowEvent,
     GetEventLists,
     UpdateEvent,
-    DeleteEvent, upload
+    DeleteEvent, upload,
+    updatePaymentStatus,
+    uploadPaymentProof
 };

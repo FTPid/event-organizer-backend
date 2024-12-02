@@ -102,6 +102,7 @@ model Transaction {
   promotion     Promotion?    @relation(fields: [promotionId], references: [id])
   paymentStatus PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
+  paymentProof  String?
   Ticket        Ticket[]
 }
 
@@ -118,6 +119,7 @@ enum EventType {
 
 enum PaymentStatus {
   PENDING
+  VERIFICATION
   COMPLETED
   FAILED
 }
