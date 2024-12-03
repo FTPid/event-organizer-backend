@@ -25,6 +25,8 @@ model User {
   events       Event[]
   tickets      Ticket[]
   transactions Transaction[]
+
+  Rating Rating[]
 }
 
 model Event {
@@ -45,6 +47,8 @@ model Event {
   tickets        Ticket[]
   promotions     Promotion[]
   Transaction    Transaction[]
+
+  Rating Rating[]
 }
 
 model Promotion {
@@ -104,6 +108,17 @@ model Transaction {
   createdAt     DateTime      @default(now())
   paymentProof  String?
   Ticket        Ticket[]
+}
+
+model Rating {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   Int
+  createdAt DateTime @default(now())
 }
 
 enum Role {

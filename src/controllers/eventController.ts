@@ -48,7 +48,7 @@ async function uploadPaymentProof(req: Request, res: Response, next: NextFunctio
             where: { id: parseInt(id) },
             data: {
                 paymentProof: imagePath,
-                paymentStatus: PaymentStatus.VERIFICATION,
+                paymentStatus: PaymentStatus.COMPLETED,
             }
         });
 

@@ -202,6 +202,7 @@ async function getTransaction(req: Request, res: Response, next: NextFunction): 
                 event: {
                     select: {
                         name: true,
+                        id: true,  // Ensure event ID is selected
                     },
                 },
             },
@@ -209,18 +210,17 @@ async function getTransaction(req: Request, res: Response, next: NextFunction): 
             take,
         });
 
-
         const totalTransactions = await prisma.transaction.count({
             where: { userId: userId },
         });
 
         const totalPages = Math.ceil(totalTransactions / size);
 
-
         const transformedTransactions = transactions.map((transaction) => ({
             id: transaction.id,
             userName: transaction.user.name,
             eventName: transaction.event.name,
+            eventId: transaction.event.id,
             totalAmount: transaction.totalAmount,
             discount: transaction.discount,
             referralCode: transaction.referralCode,
@@ -243,6 +243,7 @@ async function getTransaction(req: Request, res: Response, next: NextFunction): 
         next(err);
     }
 }
+
 
 
 export const getTicketByTransaction = async (

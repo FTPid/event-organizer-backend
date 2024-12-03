@@ -7,6 +7,7 @@ import locationRouter from "./routes/locationRoutes"
 import eventRouter from "./routes/eventRoutes"
 import promotionRouter from "./routes/promotionRoutes"
 import ticketRouter from "./routes/ticketRoutes"
+import ratingRouter from "./routes/ratingRoutes"
 
 import ErrorMiddleware from "./middlewares/error.middleware";
 import { VerifyToken } from "./middlewares/authMiddleware";
@@ -33,6 +34,7 @@ app.use("/locations", VerifyToken, locationRouter);
 app.use("/events", eventRouter);
 app.use('/promotions', VerifyToken, promotionRouter);
 app.use('/tickets', VerifyToken, ticketRouter);
+app.use('/ratings', ratingRouter);
 
 app.use(ErrorMiddleware);
 
